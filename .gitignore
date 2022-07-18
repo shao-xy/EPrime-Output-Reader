@@ -1,3 +1,15 @@
+input/*
+!input/test-1-1.txt
+
+output/*
+!output/.gitkeep
+
+# For vim
+[._]*.sw[a-z]
+[._]sw[a-z]
+
+# Below are template .gitignore lines for Python
+##########################################
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
