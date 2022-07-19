@@ -1,3 +1,3 @@
-python py/main.py AttentionBias "%1"
+python "%~dp0/py/main.py" AttentionBias "%1"
 
 pause

@@ -1,15 +1,60 @@
 #!/usr/bin/env python3
 # vim: ts=2 sw=2 expandtab smarttab
 
+from EPrimeReader import EPrimeReader
 from Handler import Handler
 
-class FlankerHandler(Handler):
+class EFTHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
-    pass
+    return frameidx < 12 or frame['Stimulus'] == 'Target1.png' \
+      or frame['Stimulus'] == 'Target2.png' or not frame['StimDisplay.RESP']
+
+  def frame_single_process(self, frame):
+    keys = ['Stimulus', 'StimDisplay.RESP', 'StimDisplay.RT', 'CorrectAnswer']
+    return EPrimeReader.Frame({key: frame[key] for key in keys})
+
+  def calculate(self, frames):
+    rts = [ int(frame['StimDisplay.RT']) for frame in frames ]
+    correctness = [ (frame['StimDisplay.RESP'] == frame['CorrectAnswer']) for frame in frames ]
+    return {
+      'avg_rt': sum(rts) / len(rts),
+      'correctness': correctness.count(True) / len(correctness),
+    }
+
+  def frames_global_process(self):
+    inconsistent_frames = [ frame for frame in self._processed_frames if frame['Stimulus'] == 'Target3.png' or frame['Stimulus'] == 'Target6.png' ]
+    inconsistent_result = self.calculate(inconsistent_frames)
+    consistent_frames = [ frame for frame in self._processed_frames if frame['Stimulus'] == 'Target4.png' or frame['Stimulus'] == 'Target5.png' ]
+    consistent_result = self.calculate(consistent_frames)
+    #self._processed_frames = None
+    return {
+      'Con_avg_rt': consistent_result['avg_rt'],
+      'Con_correctness': consistent_result['correctness'],
+      'InCon_avg_rt': inconsistent_result['avg_rt'],
+      'InCon_correctness': inconsistent_result['correctness'],
+    }
 
 class IGTHandler(Handler):
+  def real_choice(self, choice):
+    ch = '-'
+    for c in choice:
+      if ord(c) >= ord('A') and ord(c) <= ord('D'):
+        ch = c
+    return ch
+
   def frame_should_drop(self, frameidx, frame):
-    pass
+    return not frame.has('Stimulus.RESP')
+
+  def frame_single_process(self, frame):
+    return EPrimeReader.Frame({'Choice': self.real_choice(frame['Stimulus.RESP'])})
+
+  def frames_global_process(self):
+    choices = [ frame['Choice'] for frame in self._processed_frames ]
+    self._processed_frames = None
+    igt = choices.count('C') + choices.count('D') - choices.count('A') - choices.count('B')
+    return {
+      'IGT': igt,
+    }
 
 class AttentionalBiasHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
@@ -30,7 +75,7 @@ class TestHandler(Handler):
 
 
 HANDLERS = {
-'Flanker': FlankerHandler(),
+'EFT': EFTHandler(),
 'IGT': IGTHandler(),
 'AttentionalBias': AttentionalBiasHandler(),
 'test': TestHandler(),

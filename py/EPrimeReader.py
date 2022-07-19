@@ -41,8 +41,8 @@ class LineDropRecorder:
 
 class EPrimeReader:
   class Frame:
-    def __init__(self):
-      self._d = {}
+    def __init__(self, data = None):
+      self._d = data and data or {}
       self.start = -1
       self.end = -1
 

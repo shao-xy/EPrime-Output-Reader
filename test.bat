@@ -1,3 +1,3 @@
-python py/main.py test "%1"
+python "%~dp0/py/main.py" test "%1"
 
 pause
