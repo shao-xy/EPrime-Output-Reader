@@ -4,6 +4,9 @@
 FRAME_START_LINE = '*** LogFrame Start ***'
 FRAME_END_LINE = '*** LogFrame End ***'
 
+#SHOW_DROP = True
+SHOW_DROP = False
+
 import sys
 
 class LineDropRecorder:
@@ -11,6 +14,7 @@ class LineDropRecorder:
     self._dropped = {}
 
   def __del__(self):
+    if not SHOW_DROP: return
     for title, drop in self._dropped.items():
       LineDropRecorder.print_drop(title, drop, False)
     sys.stderr.flush()
@@ -27,7 +31,11 @@ class LineDropRecorder:
       self._dropped[title] = [line_num, line_num]
 
   def print_drop(title, cur_drop, flush=True):
-    sys.stderr.write('Dropping %s lines %d ~ %d\n' % (title, cur_drop[0], cur_drop[1]))
+    if not SHOW_DROP: return
+    if cur_drop[0] != cur_drop[1]:
+      sys.stderr.write('Dropping %s lines %d ~ %d\n' % (title, cur_drop[0], cur_drop[1]))
+    else:
+      sys.stderr.write('Dropping %s line %d\n' % (title, cur_drop[0]))
     if flush:
       sys.stderr.flush()
 
@@ -43,6 +51,9 @@ class EPrimeReader:
 
     def nullkey(self, key):
       return not (key in self._d or self._d[key] == '')
+
+    def keys(self):
+      return self._d.keys()
 
     def get(self, key):
       return key in self._d and self._d[key] or None
@@ -86,12 +97,15 @@ class EPrimeReader:
 
       if line == FRAME_START_LINE:
         if cur_frame:
-          LineDropRecorder.print_drop('incomplete LogFrame', (cur_frame.start, line_num - 1))
+          LineDropRecorder.print_drop('incomplete LogFrame start', (cur_frame.start, line_num - 1))
         cur_frame = EPrimeReader.Frame()
         cur_frame.start = line_num
         continue
 
       if line == FRAME_END_LINE:
+        if not cur_frame:
+          LineDropRecorder.print_drop('incomplete LogFrame end', (line_num, line_num))
+          continue
         cur_frame.end = line_num
         frames.append(cur_frame)
         cur_frame = None
