@@ -26,7 +26,7 @@ class EFTHandler(Handler):
     inconsistent_result = self.calculate(inconsistent_frames)
     consistent_frames = [ frame for frame in self._processed_frames if frame['Stimulus'] == 'Target4.png' or frame['Stimulus'] == 'Target5.png' ]
     consistent_result = self.calculate(consistent_frames)
-    #self._processed_frames = None
+    self._processed_frames = None
     return {
       'Con_avg_rt': consistent_result['avg_rt'],
       'Con_correctness': consistent_result['correctness'],
@@ -58,7 +58,45 @@ class IGTHandler(Handler):
 
 class AttentionalBiasHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
-    pass
+    return frame['Procedure'] == 'exProc' or frame['Slide1.RT'] == '0'
+
+  def frame_single_process(self, frame):
+    keys = ['Slide1.ACC', 'Slide1.RT', 'stimulus1', 'stimulus2', 'pic1', 'pic2']
+    return EPrimeReader.Frame({key: frame[key] for key in keys})
+
+  def is_negative_stimulation(self, frame):
+    if frame['stimulus1'] and not frame['stimulus2']:
+      return frame['pic1'][0] == 'A'
+    elif not frame['stimulus1'] and frame['stimulus2']:
+      return frame['pic2'][0] == 'A'
+    else:
+      raise Exception('Illegal data: %s' % repr(frame))
+
+  def calculate(self, frames):
+    rts = [ int(frame['Slide1.RT']) for frame in frames ]
+    correctness = [ int(frame['Slide1.ACC']) for frame in frames ]
+    return {
+      'avg_rt': sum(rts) / len(rts),
+      'correctness': sum(correctness) / len(correctness),
+    }
+
+  def frames_global_process(self):
+    negative_frames, neutral_frames = [], []
+    for frame in self._processed_frames:
+      if self.is_negative_stimulation(frame):
+        negative_frames.append(frame)
+      else:
+        neutral_frames.append(frame)
+    self._processed_frames = None
+    negative_result = self.calculate(negative_frames)
+    neutral_result = self.calculate(neutral_frames)
+
+    return {
+      'Neg_avg_rt': negative_result['avg_rt'],
+      'Neg_correctness': negative_result['correctness'],
+      'Neu_avg_rt': neutral_result['avg_rt'],
+      'Neu_correctness': neutral_result['correctness'],
+    }
 
 class TestHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
