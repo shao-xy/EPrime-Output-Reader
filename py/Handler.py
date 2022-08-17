@@ -25,6 +25,12 @@ class Handler:
   def frames_global_process(self):
     raise Exception('Unimplemented abstract function')
 
+  def clone(self):
+    raise Exception('Unimplemented abstract function')
+
+  def get_keys(self):
+    raise Exception('Unimplemented abstract function')
+
   def handle(self):
     if self._raw_frames == None:
       sys.stderr.write('Fatal: no frames available. Have you called Handler.read_frames()?')

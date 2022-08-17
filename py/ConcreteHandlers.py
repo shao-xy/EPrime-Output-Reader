@@ -34,6 +34,12 @@ class EFTHandler(Handler):
       'InCon_correctness': inconsistent_result['correctness'],
     }
 
+  def clone(self):
+    return EFTHandler()
+
+  def get_keys(self):
+    return ['Con_avg_rt', 'Con_correctness', 'InCon_avg_rt', 'InCon_correctness']
+
 class IGTHandler(Handler):
   def real_choice(self, choice):
     ch = '-'
@@ -55,6 +61,12 @@ class IGTHandler(Handler):
     return {
       'IGT': igt,
     }
+
+  def clone(self):
+    return IGTHandler()
+
+  def get_keys(self):
+    return ['IGT']
 
 class AttentionalBiasHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
@@ -98,6 +110,12 @@ class AttentionalBiasHandler(Handler):
       'Neu_correctness': neutral_result['correctness'],
     }
 
+  def clone(self):
+    return AttentionalBiasHandler()
+
+  def get_keys(self):
+    return ['Neg_avg_rt', 'Neg_correctness', 'Neu_avg_rt', 'Neu_correctness']
+
 class TestHandler(Handler):
   def frame_should_drop(self, frameidx, frame):
     return frameidx < 5
@@ -110,6 +128,12 @@ class TestHandler(Handler):
     return {
       'Average': sum(onsettimes) / len(onsettimes)
     }
+
+  def clone(self):
+    return TestHandler()
+
+  def get_keys(self):
+    return ['Average']
 
 
 HANDLERS = {
