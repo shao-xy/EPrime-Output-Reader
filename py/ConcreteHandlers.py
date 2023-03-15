@@ -100,8 +100,11 @@ class AttentionalBiasHandler(Handler):
       else:
         neutral_frames.append(frame)
     self._processed_frames = None
-    negative_result = self.calculate(negative_frames)
-    neutral_result = self.calculate(neutral_frames)
+    try:
+      negative_result = self.calculate(negative_frames)
+      neutral_result = self.calculate(neutral_frames)
+    except ZeroDivisionError:
+      return None
 
     return {
       'Neg_avg_rt': negative_result['avg_rt'],

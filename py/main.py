@@ -64,17 +64,27 @@ def main():
   first_path = args.target[0]
   dst_path = os.path.isfile(first_path) and os.path.dirname(first_path) or first_path
   dst_path = os.path.join(dst_path, '%s_%s.csv' % (args.name, time.strftime('%Y%m%d-%H%M%S')))
+  failed_files = []
   fout = open(dst_path, 'w')
   fout.write(',%s\n' % (','.join(keys)))
   for thrd in thrd_pool:
     thrd.join()
     fout.write(thrd._basename)
     results = thrd._handler._results
-    for key in keys:
-      fout.write(',%s' % str(results[key]))
+    if results:
+      for key in keys:
+        val_str = (key in results) and str(results) or ''
+        fout.write(',%s' % str(results[key]))
+    else:
+      failed_files.append(thrd._basename)
     fout.write('\n')
     fout.flush()
   fout.close()
+
+  if len(failed_files) > 0:
+    sys.stderr.write('Failed to handle files: \n%s\n' % ('\n'.join(failed_files)))
+
+  input('Press [Enter] to continue...')
   return 0
 
 if __name__ == '__main__':
